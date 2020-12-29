@@ -7,6 +7,8 @@
                 </h5>
             </summary>
             <div>
+                <a href="/delete/{{ new.guid }}">Delete</a>
+                <br>
                 <span>{{ new.note }}</span>
                 <table class="table">
                     <tr>
@@ -14,7 +16,7 @@
                         <th scope="col">Old</th>
                         <th scope="col">New</th>
                     </tr>
-                    {{ review_table_item "Count" new.text old.text }}
+                    {{ review_table_item "Text" new.text old.text }}
                     {{ review_table_item "Count" new.count old.count }}
                     {{ review_table_item "Uses" new.uses old.uses }}
                     {{ review_table_item "Rounds" new.rounds old.rounds }}

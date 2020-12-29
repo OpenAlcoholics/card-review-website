@@ -10,4 +10,5 @@ pub struct Review {
     pub unique: bool,
     pub note: String,
     pub branch: String,
+    pub guid: Option<String>,
 }

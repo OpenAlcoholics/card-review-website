@@ -4,6 +4,7 @@ extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
+extern crate uuid;
 
 use core::fmt;
 use std::fs::File;
@@ -11,6 +12,7 @@ use std::io::{self, BufReader, Write};
 use std::path::PathBuf;
 
 use rocket::http::Status;
+use rocket::response::Redirect;
 use rocket_contrib::json::Json;
 use rocket_contrib::templates::handlebars::{Context, Handlebars, Helper, HelperResult, JsonRender, JsonValue, Output, RenderContext};
 use rocket_contrib::templates::Template;
@@ -26,10 +28,34 @@ struct AddResponse {
 
 #[post("/add", format = "application/json", data = "<review>")]
 fn add_review(review: Json<Review>) -> Result<Json<AddResponse>> {
-    write_review("/data/reviews.json", review.0)?;
+    let mut review = review.0;
+    review.guid = Some(uuid::Uuid::new_v4().to_string());
+
+    write_review("reviews.json", review)?;
     Ok(Json(AddResponse {
         message: "Ok".to_string()
     }))
+}
+
+fn write_reviews(reviews: Vec<Review>, path: &str) -> Result<()> {
+    let file = File::create(path)?;
+    serde_json::to_writer(&file, &reviews)?;
+
+    Ok(())
+}
+
+#[get("/delete/<guid>")]
+fn delete_review(guid: String) -> Result<Redirect> {
+    let path = "reviews.json";
+    let reviews = get_reviews(path)?
+        .into_iter()
+        .filter(|r|
+            r.guid.as_ref().unwrap() != &guid)
+        .collect();
+
+    write_reviews(reviews, path)?;
+
+    Ok(Redirect::to("/"))
 }
 
 fn get_cards(path: &str) -> Result<Vec<Card>> {
@@ -57,10 +83,8 @@ fn write_review(path: &str, review: Review) -> Result<()> {
     }
 
     reviews.push(review);
-    let file = File::create(path)?;
-    serde_json::to_writer(&file, &reviews)?;
 
-    Ok(())
+    write_reviews(reviews, path)
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -68,16 +92,19 @@ struct ReviewListItem {
     new: Review,
     old: Card,
     json: String,
+    guid: String,
 }
 
 impl From<(Card, Review)> for ReviewListItem {
     fn from((card, review): (Card, Review)) -> Self {
         let json = serde_json::to_string(&review).unwrap();
+        let guid = review.guid.as_ref().unwrap().clone();
 
         ReviewListItem {
             new: review,
             old: card,
             json,
+            guid,
         }
     }
 }
@@ -194,7 +221,8 @@ fn main() {
         .mount("/", routes![
             add_review,
             add_review_options,
-            index
+            index,
+            delete_review
         ])
         .launch();
 }
