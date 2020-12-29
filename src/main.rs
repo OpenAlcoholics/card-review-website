@@ -31,7 +31,7 @@ fn add_review(review: Json<Review>) -> Result<Json<AddResponse>> {
     let mut review = review.0;
     review.guid = Some(uuid::Uuid::new_v4().to_string());
 
-    write_review("reviews.json", review)?;
+    write_review("/data/reviews.json", review)?;
     Ok(Json(AddResponse {
         message: "Ok".to_string()
     }))
@@ -46,7 +46,7 @@ fn write_reviews(reviews: Vec<Review>, path: &str) -> Result<()> {
 
 #[get("/delete/<guid>")]
 fn delete_review(guid: String) -> Result<Redirect> {
-    let path = "reviews.json";
+    let path = "/data/reviews.json";
     let reviews = get_reviews(path)?
         .into_iter()
         .filter(|r|
@@ -78,7 +78,7 @@ fn get_reviews(path: &str) -> Result<Vec<Review>> {
 
 fn write_review(path: &str, review: Review) -> Result<()> {
     let mut reviews = get_reviews(path)?;
-    let cards = get_cards("cards.json")?;
+    let cards = get_cards("/data/cards.json")?;
     let invalid = reviews.iter().filter(|r| **r == review).next().is_some() ||
         cards.iter().filter(|c| review.equals_card(*c)).next().is_some();
     if invalid {
