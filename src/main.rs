@@ -78,7 +78,7 @@ fn get_reviews(path: &str) -> Result<Vec<Review>> {
 
 fn write_review(path: &str, review: Review) -> Result<()> {
     let mut reviews = get_reviews(path)?;
-    if reviews.contains(&review) {
+    if reviews.iter().filter(|r| **r == review).next().is_some() {
         return Err(Error::DuplicateReview);
     }
 
