@@ -1,0 +1,33 @@
+<section class="container-fluid" id="review-{{ id }}">
+    <article class="collapse show events" id="review-{{ id }}" aria-labelledby="review-{{ id }}">
+        <details>
+            <summary>
+                <h5 class="day-header" style="display: inline;">
+                    {{ new.text }} ({{ new.id }})
+                </h5>
+            </summary>
+            <div>
+                <span>{{ new.note }}</span>
+                <table class="table">
+                    <tr>
+                        <th scope="col">Attribute</th>
+                        <th scope="col">Old</th>
+                        <th scope="col">New</th>
+                    </tr>
+                    {{ review_table_item "Count" new.text old.text }}
+                    {{ review_table_item "Count" new.count old.count }}
+                    {{ review_table_item "Uses" new.uses old.uses }}
+                    {{ review_table_item "Rounds" new.rounds old.rounds }}
+                    {{ review_table_item "Personal" new.personal old.personal }}
+                    {{ review_table_item "Remote" new.remote old.remote }}
+                    {{ review_table_item "Unique" new.unique old.unique }}
+                    <tr>
+                        <th>JSON (new)</th>
+                        <td colspan="2" style="font-size: 0.5em;">{{ json }}</td>
+                    </tr>
+                </table>
+
+            </div>
+        </details>
+    </article>
+</section>
