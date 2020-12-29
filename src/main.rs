@@ -78,7 +78,10 @@ fn get_reviews(path: &str) -> Result<Vec<Review>> {
 
 fn write_review(path: &str, review: Review) -> Result<()> {
     let mut reviews = get_reviews(path)?;
-    if reviews.iter().filter(|r| **r == review).next().is_some() {
+    let cards = get_cards("cards.json")?;
+    let invalid = reviews.iter().filter(|r| **r == review).next().is_some() ||
+        cards.iter().filter(|c| review.equals_card(*c)).next().is_some();
+    if invalid {
         return Err(Error::DuplicateReview);
     }
 
