@@ -30,9 +30,9 @@ jobs:
         name: apply config
         with:
           kubeconfig: ${{ secrets.K8SCONF }}
-          args: delete -n saufautomat rs -l "'app in (card-review), dockertag notin (${{steps.vars.outputs.tag}})'"
+          args: apply -f .kubernetes/manifest.yaml
       - uses: danielr1996/kubectl-action@1.0.0
         name: apply config
         with:
           kubeconfig: ${{ secrets.K8SCONF }}
-          args: apply -f .kubernetes/manifest.yaml
+          args: delete -n saufautomat rs -l "'app in (card-review), dockertag notin (${{steps.vars.outputs.tag}})'"
