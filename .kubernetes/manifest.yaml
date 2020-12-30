@@ -51,7 +51,7 @@ spec:
     spec:
       containers:
         - name: card-review
-          image: openalcoholics/card-review{{TAG}}
+          image: openalcoholics/card-review:{{TAG}}
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
