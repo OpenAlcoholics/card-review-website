@@ -53,6 +53,11 @@ spec:
         - name: card-review
           image: openalcoholics/card-review:{{TAG}}
           imagePullPolicy: Always
+          env:
+            - name: CARDS_FILE
+              value: "/data/cards.json"
+            - name: REVIEWS_FILE
+              value: "/data/reviews.json"
           ports:
             - containerPort: 8000
               protocol: TCP
