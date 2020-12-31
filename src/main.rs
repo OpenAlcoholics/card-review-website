@@ -1,5 +1,7 @@
 #![feature(decl_macro)]
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
@@ -7,6 +9,7 @@ extern crate serde_derive;
 extern crate uuid;
 
 use core::fmt;
+use std::env;
 use std::fs::File;
 use std::io::{self, BufReader, Write};
 use std::path::PathBuf;
@@ -21,6 +24,11 @@ use serde::export::Formatter;
 use dgc_review::{Card, error::{Error, Result}, Review};
 use dgc_review::cors::CORS;
 
+lazy_static! {
+    static ref CARDS_FILE: String = env::var("CARDS_FILE").unwrap_or("/data/cards.json".to_string());
+    static ref REVIEWS_FILE: String = env::var("REVIEWS_FILE").unwrap_or("/data/reviews.json".to_string());
+}
+
 #[derive(Serialize)]
 struct AddResponse {
     message: String
@@ -31,14 +39,14 @@ fn add_review(review: Json<Review>) -> Result<Json<AddResponse>> {
     let mut review = review.0;
     review.guid = Some(uuid::Uuid::new_v4().to_string());
 
-    write_review("/data/reviews.json", review)?;
+    write_review(review)?;
     Ok(Json(AddResponse {
         message: "Ok".to_string()
     }))
 }
 
-fn write_reviews(reviews: Vec<Review>, path: &str) -> Result<()> {
-    let file = File::create(path)?;
+fn write_reviews(reviews: Vec<Review>) -> Result<()> {
+    let file = File::create(REVIEWS_FILE.as_str())?;
     serde_json::to_writer(&file, &reviews)?;
 
     Ok(())
@@ -47,19 +55,19 @@ fn write_reviews(reviews: Vec<Review>, path: &str) -> Result<()> {
 #[get("/delete/<guid>")]
 fn delete_review(guid: String) -> Result<Redirect> {
     let path = "/data/reviews.json";
-    let reviews = get_reviews(path)?
+    let reviews = get_reviews()?
         .into_iter()
         .filter(|r|
             r.guid.as_ref().unwrap() != &guid)
         .collect();
 
-    write_reviews(reviews, path)?;
+    write_reviews(reviews)?;
 
     Ok(Redirect::to("/"))
 }
 
-fn get_cards(path: &str) -> Result<Vec<Card>> {
-    let file = File::open(path)?;
+fn get_cards() -> Result<Vec<Card>> {
+    let file = File::open(CARDS_FILE.as_str())?;
     let reader = BufReader::new(file);
 
     let cards = serde_json::from_reader(reader)?;
@@ -67,8 +75,8 @@ fn get_cards(path: &str) -> Result<Vec<Card>> {
     Ok(cards)
 }
 
-fn get_reviews(path: &str) -> Result<Vec<Review>> {
-    let file = File::open(path)?;
+fn get_reviews() -> Result<Vec<Review>> {
+    let file = File::open(REVIEWS_FILE.as_str())?;
     let reader = BufReader::new(file);
 
     let reviews = serde_json::from_reader(reader)?;
@@ -76,9 +84,9 @@ fn get_reviews(path: &str) -> Result<Vec<Review>> {
     Ok(reviews)
 }
 
-fn write_review(path: &str, review: Review) -> Result<()> {
-    let mut reviews = get_reviews(path)?;
-    let cards = get_cards("/data/cards.json")?;
+fn write_review(review: Review) -> Result<()> {
+    let mut reviews = get_reviews()?;
+    let cards = get_cards()?;
     let invalid = reviews.iter().filter(|r| **r == review).next().is_some() ||
         cards.iter().filter(|c| review.equals_card(*c)).next().is_some();
     if invalid {
@@ -87,7 +95,7 @@ fn write_review(path: &str, review: Review) -> Result<()> {
 
     reviews.push(review);
 
-    write_reviews(reviews, path)
+    write_reviews(reviews)
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -134,31 +142,29 @@ fn create_empty_json_file(path: &str) -> Result<()> {
 
 #[get("/")]
 fn index() -> Result<Template> {
-    let cards_path = "/data/cards.json";
-    let reviews_path = "/data/reviews.json";
-    let cards = match get_cards(cards_path) {
+    let cards = match get_cards() {
         Ok(val) => {
             Ok(val)
         }
         Err(e) => {
             match e {
                 Error::FileAccess => {
-                    create_empty_json_file(cards_path)?;
-                    get_cards(cards_path)
+                    create_empty_json_file(CARDS_FILE.as_ref())?;
+                    get_cards()
                 }
                 _ => Err(e)
             }
         }
     }?;
-    let reviews = match get_reviews(reviews_path) {
+    let reviews = match get_reviews() {
         Ok(val) => {
             Ok(val)
         }
         Err(e) => {
             match e {
                 Error::FileAccess => {
-                    create_empty_json_file(reviews_path)?;
-                    get_reviews(reviews_path)
+                    create_empty_json_file(REVIEWS_FILE.as_ref())?;
+                    get_reviews()
                 }
                 _ => Err(e)
             }
