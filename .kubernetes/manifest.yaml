@@ -58,6 +58,8 @@ spec:
               value: "/data/cards.json"
             - name: REVIEWS_FILE
               value: "/data/reviews.json"
+            - name: CORS_ALLOW_ORIGIN
+              value: "https://saufautom.at"
           ports:
             - containerPort: 8000
               protocol: TCP
