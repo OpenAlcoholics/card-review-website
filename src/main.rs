@@ -8,18 +8,15 @@ extern crate rocket_contrib;
 extern crate serde_derive;
 extern crate uuid;
 
-use core::fmt;
 use std::env;
 use std::fs::File;
-use std::io::{self, BufReader, Write};
-use std::path::PathBuf;
+use std::io::{BufReader, Write};
 
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket_contrib::json::Json;
 use rocket_contrib::templates::handlebars::{Context, Handlebars, Helper, HelperResult, JsonRender, JsonValue, Output, RenderContext};
 use rocket_contrib::templates::Template;
-use serde::export::Formatter;
 
 use dgc_review::{Card, error::{Error, Result}, Review};
 use dgc_review::cors::CORS;
@@ -54,7 +51,6 @@ fn write_reviews(reviews: Vec<Review>) -> Result<()> {
 
 #[get("/delete/<guid>")]
 fn delete_review(guid: String) -> Result<Redirect> {
-    let path = "/data/reviews.json";
     let reviews = get_reviews()?
         .into_iter()
         .filter(|r|
