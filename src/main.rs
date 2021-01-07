@@ -1,4 +1,5 @@
 #![feature(decl_macro)]
+extern crate difference;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
@@ -12,6 +13,7 @@ use std::env;
 use std::fs::File;
 use std::io::{BufReader, Write};
 
+use difference::{Changeset, Difference};
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket_contrib::json::Json;
@@ -199,18 +201,48 @@ pub fn helper_eq(h: &Helper, _: &Handlebars, _: &Context, _: &mut RenderContext,
     Ok(())
 }
 
+fn diff(s1: &str, s2: &str) -> (String, String) {
+    let mut old = String::new();
+    let mut new = String::new();
+
+    let diff = Changeset::new(s1, s2, "");
+
+    for diff in diff.diffs {
+        match diff {
+            Difference::Same(v) => {
+                old += v.as_ref();
+                new += v.as_ref();
+            }
+            Difference::Add(v) => {
+                new += format!("<b style='color: green;'>{}</b>", v).as_ref();
+            }
+            Difference::Rem(v) => {
+                old += format!("<b style='color: red;'>{}</b>", v).as_ref();
+            }
+        }
+    }
+
+    return (old, new);
+}
+
 pub fn helper_review_table_item(h: &Helper, _: &Handlebars, _: &Context, _: &mut RenderContext, out: &mut dyn Output) -> HelperResult {
     let attr = h.param(0).unwrap().value().as_str().unwrap();
-    let new_param = h.param(1).unwrap().value().to_string();
-    let new = new_param.as_str().trim();
-    let old_param = h.param(2).unwrap().value().to_string();
-    let old = old_param.as_str().trim();
+    let new = h.param(1).unwrap().value().to_string();
+    let new = new.trim();
+    let old = h.param(2).unwrap().value().to_string();
+    let old = old.trim();
 
-    let class = if new == old { "" } else { "table-danger" };
+    let (old, new) = if attr == "Text" && new != old {
+        diff(old, new)
+    } else {
+        (old.to_string(), new.to_string())
+    };
+
+    let class = if new == old { "" } else { "" }; // table-danger
     let r = format!("<tr class=\"w-80 {}\">", class);
     let result = r + r#"<th scope="col">"# + attr + "</th>"
-        + r#"<td scope="col">"# + old + "</td>"
-        + r#"<td scope="col">"# + new + "</td>"
+        + r#"<td scope="col">"# + old.as_ref() + "</td>"
+        + r#"<td scope="col">"# + new.as_ref() + "</td>"
         + "</tr>";
     out.write(JsonValue::from(result).render().as_ref())?;
     Ok(())

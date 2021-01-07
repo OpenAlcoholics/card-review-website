@@ -219,6 +219,7 @@ dependencies = [
 name = "dgc-review"
 version = "0.1.0"
 dependencies = [
+ "difference",
  "lazy_static",
  "rocket",
  "rocket_contrib",
@@ -227,6 +228,12 @@ dependencies = [
  "serde_json",
  "uuid",
 ]
+
+[[package]]
+name = "difference"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "524cbf6897b527295dff137cec09ecf3a05f4fddffd7dfcd1585403449e74198"
 
 [[package]]
 name = "digest"
