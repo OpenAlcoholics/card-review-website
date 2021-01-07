@@ -232,14 +232,17 @@ pub fn helper_review_table_item(h: &Helper, _: &Handlebars, _: &Context, _: &mut
     let old = h.param(2).unwrap().value().to_string();
     let old = old.trim();
 
-    let (old, new) = if attr == "Text" && new != old {
-        diff(old, new)
+    let (old, new, highlight_class) = if attr == "Text" && new != old {
+        let (old, new) = diff(old, new);
+
+        (old, new, "")
+    } else if new != old {
+        (old.to_string(), new.to_string(), "table-danger")
     } else {
-        (old.to_string(), new.to_string())
+        (old.to_string(), new.to_string(), "")
     };
 
-    let class = if new == old { "" } else { "" }; // table-danger
-    let r = format!("<tr class=\"w-80 {}\">", class);
+    let r = format!("<tr class=\"w-80 {}\">", highlight_class);
     let result = r + r#"<th scope="col">"# + attr + "</th>"
         + r#"<td scope="col">"# + old.as_ref() + "</td>"
         + r#"<td scope="col">"# + new.as_ref() + "</td>"
